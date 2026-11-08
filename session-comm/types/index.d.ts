@@ -86,7 +86,7 @@ export type Snapshot = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'session-list': {
+    'session-comm': {
       snapshot: Snapshot
       // 入力欄の送り先。'self' はこのセッション、それ以外は相手の ID の先頭8桁
       target: string
@@ -100,7 +100,7 @@ declare module 'claude-code' {
       talk: TalkItem[]
       // 並べて見るセッション（ID の先頭8桁、3つまで）。空なら最近動いたセッションを自動で選ぶ
       picked: string[]
-      // ペインを開いておきたいか（/sessions で true、手で閉じたら false）
+      // ペインを開いておきたいか（/session-comm で true、手で閉じたら false）
       paneWanted: boolean
     }
   }

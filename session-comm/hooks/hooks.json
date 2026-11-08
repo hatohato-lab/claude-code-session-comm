@@ -1,0 +1,4 @@
+{
+  "description": "session-comm の hooks モジュール（セッション間通信のペイン）",
+  "modules": ["./register.tsx"]
+}

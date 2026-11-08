@@ -2,7 +2,7 @@
 
 読むだけで、何も書き換えない。.key のファイルは開かない。
 使い方: python 在席表.py
-セッション一覧の mod が15秒ごとに呼ぶ。
+セッション間通信の mod が15秒ごとに呼ぶ。
 """
 import ctypes
 import datetime

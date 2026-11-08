@@ -23,10 +23,10 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: プラグインの形の検査
-        run: claude plugin validate ./session-list
+        run: claude plugin validate ./session-comm
 
       - name: テスト
-        working-directory: session-list
+        working-directory: session-comm
         run: claude plugin test
 
       # 架空のセッションの記録を作り、同梱の Python を python3 で回す。動いているセッションだけが出ることを見る
@@ -46,18 +46,18 @@ jobs:
           echo "{\"pid\": $LIVE, \"sessionId\": \"$SID\", \"name\": \"00-01\", \"status\": \"busy\", \"entrypoint\": \"claude-vscode\", \"cwd\": \"/work/space\", \"updatedAt\": $NOW}" > "$HOME/.claude/sessions/$LIVE.json"
           echo "{\"pid\": $DEAD, \"sessionId\": \"$GONE\", \"name\": \"00-02\", \"status\": \"idle\", \"entrypoint\": \"claude-vscode\", \"cwd\": \"/work/space\", \"updatedAt\": $NOW}" > "$HOME/.claude/sessions/$DEAD.json"
           echo "{\"type\": \"custom-title\", \"customTitle\": \"試験1\", \"sessionId\": \"$SID\"}" > "$HOME/.claude/projects/-work-space/$SID.jsonl"
-          python3 -X utf8 session-list/tools/在席表.py | tee attendance.txt
+          python3 -X utf8 session-comm/tools/在席表.py | tee attendance.txt
           grep -q "試験1 | a0000001 | 00-01 | 作業中" attendance.txt
           if grep -q b0000002 attendance.txt; then echo "閉じたセッションが出ています"; exit 1; fi
-          echo '{}' | python3 -X utf8 session-list/tools/合図表.py - > bells.json
+          echo '{}' | python3 -X utf8 session-comm/tools/合図表.py - > bells.json
           python3 -c "import json; json.load(open('bells.json', encoding='utf-8')); print('合図表.py の出力は JSON')"
-          python3 -X utf8 session-list/tools/様子表.py > activity.json
+          python3 -X utf8 session-comm/tools/様子表.py > activity.json
           python3 -c "import json; ids = [s['id'] for s in json.load(open('activity.json', encoding='utf-8'))['sessions']]; print(ids); assert any(i.startswith('a0000001') for i in ids); assert not any(i.startswith('b0000002') for i in ids)"
           kill "$LIVE"
 
       - name: マーケットプレイスから入れる
         run: |
           set -euo pipefail
-          claude plugin install session-list --marketplace "$GITHUB_WORKSPACE"
+          claude plugin install session-comm --marketplace "$GITHUB_WORKSPACE"
           claude plugin list | tee installed.txt
-          grep -q session-list installed.txt
+          grep -q session-comm installed.txt

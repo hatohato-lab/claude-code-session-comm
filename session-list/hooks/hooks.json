@@ -1,4 +1,0 @@
-{
-  "description": "session-list の hooks モジュール（セッション一覧のペイン）",
-  "modules": ["./register.tsx"]
-}

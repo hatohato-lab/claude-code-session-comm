@@ -1,6 +1,6 @@
-# claude-code-session-list
+# claude-code-session-comm
 
-Claude Code の MOD「セッション一覧」（session-list）です。
+Claude Code の MOD「セッション間通信」（session-comm）です。
 MOD は、Claude Code の画面に、自分で作った部品を足す仕組みです。
 
 セッション間のやり取りを、図で見るペインを開きます。やり取りは、SendMessage の合図と、黒板の連絡の2種類です。黒板は、決まったフォルダーに置く連絡のファイルです。黒板が無くても、この MOD は動きます（「気を付けること」を見てください）。
@@ -34,24 +34,18 @@ MOD は、Claude Code の画面に、自分で作った部品を足す仕組み�
 
 生ログの大きさは2秒ごと、各セッションの様子（最後の指示、答え、道具）とやり取りは5秒ごと、セッションの顔ぶれは15秒ごとに読み直します。
 
-## セッション情報MOD と1枚に並べる
+## セッションリストと1枚に並べる
 
-セッション情報MOD（[claude-code-session-info](https://github.com/hatohato-lab/claude-code-session-info)）を一緒に入れると、その表のペイン（`/session-info`）の下に、この MOD が2つの図を足して、1枚に並べます（v0.7.21 からの試し）。
-
-- 生ログの大きさの割合の円グラフ（大きい順に6つと、その他）
-- セッション間のやり取りの図（簡単な表示と同じ図）
-
-<img src="docs/one-sheet-sample.png" alt="セッション情報の表の下に、円グラフとやり取りの図が並んだ1枚の画面" width="434">
-
-画像は、架空の名前と文面で作り直した見本です。
-いまの公開版のセッション情報MOD（v0.18.0）では、並ばないことがあります。
+[セッションリスト](https://github.com/hatohato-lab/claude-code-session-list)（session-list）を一緒に入れると、その `/session-set` のペインで、リストの表の下に、この MOD が矢印の図を足します。
+`--plugin-dir` か `CLAUDE_CODE_PLUGIN_DIRS` で読み込むときは、この MOD のフォルダーを、セッションリストより先に書きます。この MOD が外側で描き、リストの表を受け取って、その下に図を足すためです。
+マーケットプレイスから入れたときの並び順は、確かめていません。
 
 ## 入れ方
 
 Claude Code のターミナルのセッションで、次の1行を打ちます。
 
 ```
-/plugin install session-list --marketplace hatohato-lab/claude-code-session-list
+/plugin install session-comm --marketplace hatohato-lab/claude-code-session-comm
 ```
 
 マーケットプレイスを足すかを聞かれたら `y` を押し、入れる範囲（scope）を Enter で選びます。
@@ -59,20 +53,34 @@ Claude Code のターミナルのセッションで、次の1行を打ちます�
 シェルからは、次の1行です。
 
 ```
-claude plugin install session-list --marketplace hatohato-lab/claude-code-session-list
+claude plugin install session-comm --marketplace hatohato-lab/claude-code-session-comm
 ```
 
-デスクトップアプリでは、入力欄の横の + から Plugins を開き、Add marketplace に `hatohato-lab/claude-code-session-list` を入れてから、Add plugin で入れます。
+デスクトップアプリでは、入力欄の横の + から Plugins を開き、Add marketplace に `hatohato-lab/claude-code-session-comm` を入れてから、Add plugin で入れます。
 
 クローンして使う場合は、フォルダーを指定して Claude Code を起動します。
 
 ```
-git clone https://github.com/hatohato-lab/claude-code-session-list
-claude --plugin-dir claude-code-session-list/session-list
+git clone https://github.com/hatohato-lab/claude-code-session-comm
+claude --plugin-dir claude-code-session-comm/session-comm
 ```
 
-入れたあとは、`/sessions` を打つとペインが開きます。ペインは自分からは開きません。閉じたあとも、`/sessions` で開き直せます。
+入れたあとは、`/session-comm` を打つとペインが開きます。ペインは自分からは開きません。閉じたあとも、`/session-comm` で開き直せます。
 ペインを開いたセッションでだけ動き、閉じると止まります。
+
+## 前の名前で入れていたとき
+
+v0.7.26 までは、名前が「セッション一覧」（session-list）で、リポジトリは claude-code-session-list、コマンドは `/sessions` でした。
+いまの claude-code-session-list は、別の MOD（セッションリスト）のリポジトリです。
+前の名前で入れていたら、シェルで次の2行を打って入れ直します。
+
+```
+claude plugin uninstall session-list@claude-code-session-list
+```
+
+```
+claude plugin install session-comm --marketplace hatohato-lab/claude-code-session-comm
+```
 
 ## 設定
 
@@ -107,7 +115,7 @@ MOD は1つずつ、別のリポジトリにしています。
 
 | リポジトリ | 中身 |
 |---|---|
-| [claude-code-session-info](https://github.com/hatohato-lab/claude-code-session-info) | セッション情報。開いている全セッションを1行ずつの表で見るペイン |
+| [claude-code-session-list](https://github.com/hatohato-lab/claude-code-session-list) | セッションリスト。開いている全セッションを1行ずつの表で見るペイン |
 | [claude-code-active-rules](https://github.com/hatohato-lab/claude-code-active-rules) | 効いているルール。いま読み込まれているルールを表で見るペイン |
 
 ## ライセンス

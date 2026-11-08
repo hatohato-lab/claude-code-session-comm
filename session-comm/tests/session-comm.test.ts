@@ -6,9 +6,9 @@ import type { FsEntry, FsStat, On, ProcessRunResult } from 'claude-code'
 // ペインを描くときに渡す props（VS Code の狭いパネルと同じ inline の置き方）
 const PANE = {
   component: 'Pane',
-  requestId: 'session-list',
+  requestId: 'session-comm',
   props: {
-    title: 'セッション一覧',
+    title: 'セッション間通信',
     isFocused: false,
     bodyColumns: 100,
     placement: 'inline',
@@ -140,7 +140,7 @@ function stubWorld(on: On, attendance: ProcessRunResult, quietSecOfC = 5, boardE
   mock.env(on, { USERPROFILE: 'C:\\home\\test' })
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('session.id', () => ({ value: 'bbbb2222-bbbb' }))
-  on('command.register', () => ({ value: { command: 'sessions' } }))
+  on('command.register', () => ({ value: { command: 'session-comm' } }))
   on('ui.panes', () => ({ value: [] }))
   on('ui.open', ($, e) => {
     world.opens += 1
@@ -175,7 +175,7 @@ test('名前・ID・宛先名・1文字の状態が並び、狭い棒の長さ�
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
   // 在席表.py と合図表.py は、MOD に同梱した tools から呼ばれる（作業フォルダーの 00_黒板 には頼らない）
@@ -185,7 +185,7 @@ test('名前・ID・宛先名・1文字の状態が並び、狭い棒の長さ�
   expect(world.scripts.some(script => script.endsWith('様子表.py'))).toBe(true)
 
   for (const surface of ['terminal', 'vscode'] as const) {
-    const ui = await $.ui.mount({ plugin: 'session-list', surface, ...PANE })
+    const ui = await $.ui.mount({ plugin: 'session-comm', surface, ...PANE })
     expect(await ui.find({ type: 'Text', text: 'セッションA' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: 'bbbb2222' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: '00-22' })).toBeDefined()
@@ -206,10 +206,10 @@ test('返事待ちのセッションが一番上に赤で出て、作業中の�
   stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const need = await ui.find({ type: 'Text', text: /⚠ 返 セッションA　返事待ち/ })
   expect(need).toBeDefined()
   expect(need?.props.color).toBe('#c00000')
@@ -224,10 +224,10 @@ test('道具を使ったまま生ログが止まっていると「承認待ち�
   stubWorld(on, ran(ATTENDANCE, 0), 45)
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const need = await ui.find({ type: 'Text', text: /⚠ 承 セッションC　承認待ちかも/ })
   expect(need).toBeDefined()
   expect(need?.props.backgroundColor).toBe('#fff3c4')
@@ -239,10 +239,10 @@ test('会話の地図が図（SVG）で描かれ、ターミナルでは文の�
   stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const svg = await ui.find({ type: 'Svg' })
   expect(svg).toBeDefined()
   const source = String(svg?.props.source ?? '')
@@ -270,7 +270,7 @@ test('会話の地図が図（SVG）で描かれ、ターミナルでは文の�
   expect(await ui.find({ type: 'Svg' })).toBeDefined()
   await ui.unmount()
 
-  const term = await $.ui.mount({ plugin: 'session-list', surface: 'terminal', ...PANE })
+  const term = await $.ui.mount({ plugin: 'session-comm', surface: 'terminal', ...PANE })
   expect(await term.find({ type: 'Svg' })).toBeUndefined()
   expect(await term.find({ type: 'Text', text: /つながりの図は VS Code/ })).toBeDefined()
   await term.unmount()
@@ -281,12 +281,12 @@ test('様子が変わったセッションを小さなモデルで2行に要約�
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
   expect(world.summaries.length).toBeGreaterThan(0)
   expect(world.summaries[0]).toContain('資料の見出しをそろえてください')
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   expect(await ui.find({ type: 'Text', text: '　要約 いま: 見出しをそろえている ／ 次: 人の返事待ち' })).toBeDefined()
   await ui.unmount()
 })
@@ -296,20 +296,20 @@ test('要約の設定を切ると、モデルを呼ばない（詳しい表示�
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(30_000)
 
   expect(world.summaries.length).toBe(0)
 })
 
-test('/sessions は、ほかの mod のペインより前に出す指定（focus）を付けてペインを開く', async ($, on) => {
+test('/session-comm は、ほかの mod のペインより前に出す指定（focus）を付けてペインを開く', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
   expect(world.opens).toBe(0)
-  await $.command.run({ command: 'sessions', args: '' })
-  // /sessions が裏で始める読み直しを、テストの終わりまでに済ませる
+  await $.command.run({ command: 'session-comm', args: '' })
+  // /session-comm が裏で始める読み直しを、テストの終わりまでに済ませる
   await clock.advance(2000)
 
   expect(world.opens).toBe(1)
@@ -321,10 +321,10 @@ test('黒板のフォルダーが無い人には、黒板の連絡が出ず、�
   stubWorld(on, ran(ATTENDANCE, 0), 5, false)
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   expect(await ui.find({ type: 'Text', text: '直近24時間のやり取り（黒板 0件・合図 2件）' })).toBeDefined()
   expect((await ui.findAll({ type: 'Text', text: /黒板を読めません/ })).length).toBe(0)
   expect((await ui.findAll({ type: 'Text', text: 'セッションC → セッションA' })).length).toBe(0)
@@ -335,10 +335,10 @@ test('今日の黒板の連絡と合図が「送り主 → 宛先」で並び、
   stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   // 送った側と受けた側の記録は、1つの合図にまとまる（4つの記録が2つの合図になる）
   expect(await ui.find({ type: 'Text', text: '直近24時間のやり取り（黒板 3件・合図 2件）' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '監視係 → 整理係' })).toBeDefined()
@@ -360,12 +360,12 @@ test('既定では、セッション間のやり取りをシーケンス図（�
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(30_000)
 
   expect(world.summaries.length).toBe(0)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   // 図だけ。入力欄・名簿の表・ボタンは出さない
   expect(await ui.find({ type: 'Input' })).toBeUndefined()
   expect(await ui.find({ type: 'Button' })).toBeUndefined()
@@ -416,7 +416,7 @@ test('既定では、セッション間のやり取りをシーケンス図（�
   await ui.unmount()
 
   // ターミナル（図を描けない）では、1行ずつの文に変わる
-  const term = await $.ui.mount({ plugin: 'session-list', surface: 'terminal', ...PANE })
+  const term = await $.ui.mount({ plugin: 'session-comm', surface: 'terminal', ...PANE })
   expect(await term.find({ type: 'Svg' })).toBeUndefined()
   expect(await term.find({ type: 'Text', text: /監視係 🔔→ セッションC/ })).toBeDefined()
   await term.unmount()
@@ -432,10 +432,10 @@ test('送り先が「このセッション」のまま送ると、使ってい�
   })
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const field = await ui.find({ type: 'Input' })
   expect(field).toBeDefined()
   await ui.input({ key: field?.key ?? '', text: 'テストの発言' })
@@ -454,10 +454,10 @@ test('送り先に相手を選んで送ると、設定の呼び名を頭に付�
   })
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   await ui.select({ key: 'target', value: 'cccc3333' })
   const field = await ui.find({ type: 'Input' })
   await ui.input({ key: field?.key ?? '', text: '黒板を見てください' })
@@ -484,7 +484,7 @@ test('目印の付いた返事は、この画面のやり取りに出し、こ�
   })
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
   const marked = await $.session.receive({ origin: { kind: 'peer' }, text: '【監視画面へ:cccc3333】見ました。3本とも合格です' })
@@ -493,7 +493,7 @@ test('目印の付いた返事は、この画面のやり取りに出し、こ�
   expect(plain.text).toBe('ふつうの連絡です')
   expect(reachedModel).toEqual(['ふつうの連絡です'])
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const line = await ui.find({ type: 'Text', text: /← セッションC「見ました。3本とも合格です」/ })
   expect(line).toBeDefined()
   expect(line?.props.color).toBe('#1f6fb2')
@@ -531,10 +531,10 @@ test('呼び名の設定が空なら、名前を付けずに送る（詳しい�
   })
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   await ui.select({ key: 'target', value: 'aaaa1111' })
   const field = await ui.find({ type: 'Input' })
   await ui.input({ key: field?.key ?? '', text: 'こんにちは' })
@@ -542,7 +542,7 @@ test('呼び名の設定が空なら、名前を付けずに送る（詳しい�
   await ui.unmount()
 })
 
-test('セッションが始まっただけでは、ペインを開かず、在席表.py も回さない（/sessions で初めて動く）', async ($, on) => {
+test('セッションが始まっただけでは、ペインを開かず、在席表.py も回さない（/session-comm で初めて動く）', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   const world = stubWorld(on, ran(ATTENDANCE, 0))
 
@@ -552,7 +552,7 @@ test('セッションが始まっただけでは、ペインを開かず、在�
   expect(world.scripts.length).toBe(0)
   expect(world.summaries.length).toBe(0)
 
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
   expect(world.opens).toBe(1)
   expect(world.scripts.length).toBeGreaterThan(0)
@@ -563,40 +563,84 @@ test('在席表.py が失敗したら、ペインに理由が出る', async ($, 
   stubWorld(on, ran('', 1, 'boom'))
 
   await $.session.start(START)
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'terminal', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'terminal', ...PANE })
   expect(await ui.find({ type: 'Text', text: /在席表\.py が失敗しました/ })).toBeDefined()
   await ui.unmount()
 })
 
-test('セッション情報MOD の表のペインに、円グラフとやり取りの図を足して1枚にする', async ($, on) => {
+// セッションリストMOD の2つのペイン（/session-list はリストだけ、/session-set はリストと矢印の図）
+const LIST = { ...PANE, requestId: 'session-list', props: { ...PANE.props, title: 'セッションリスト' } } as const
+const SET = { ...PANE, requestId: 'session-set', props: { ...PANE.props, title: 'セッションリストと通信' } } as const
+
+test('/session-comm のペインは矢印の図だけを出し、/session-set ではリストの表の下に図を足し、/session-list には何も足さない', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   stubWorld(on, ran(ATTENDANCE, 0))
-  // セッション情報MOD の表の代わり（この mod より後ろで描く mod）
-  on('ui.render', ($: any, e: any) => $.ui.resolve(e).Text({ children: 'セッション情報の表（試験用）' }))
+  // セッションリストMOD の表の代わり（この mod より後ろで描く mod）
+  on('ui.render', ($: any, e: any) => $.ui.resolve(e).Text({ children: 'セッションリストの表（試験用）' }))
 
   await $.session.start(START)
-  const INFO = { ...PANE, requestId: 'session-info', props: { ...PANE.props, title: 'セッション情報' } } as const
-  // 表のペインを描くと、この mod が数字を読み始める
-  const first = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...INFO })
-  await first.unmount()
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(30_000)
 
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'vscode', ...INFO })
-  // 表（ほかの mod が描いたもの）が上に残り、その下に円グラフと図が足される
-  expect(await ui.find({ type: 'Text', text: 'セッション情報の表（試験用）' })).toBeDefined()
+  // /session-comm のペインは矢印の図だけ（私の指示「セッション間の通信を矢印で示すやつだけでいいです」）
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...PANE })
   const svgs = await ui.findAll({ type: 'Svg' })
-  expect(svgs.length).toBe(2)
-  const pie = String(svgs[0]?.props.source ?? '')
-  expect(pie).toContain('生ログの大きさの割合（試し）')
-  // 生ログが一番大きい監視係が先に並ぶ
-  expect(pie.indexOf('監視係')).toBeLessThan(pie.indexOf('セッションA'))
-  expect(pie).toContain('<path d="M110,105')
-  const diagram = String(svgs[1]?.props.source ?? '')
+  expect(svgs.length).toBe(1)
+  const diagram = String(svgs[0]?.props.source ?? '')
   expect(diagram).toContain('>監視係<')
+  expect(diagram).not.toContain('生ログの大きさの割合')
+  expect(await ui.find({ type: 'Text', text: 'セッションリストの表（試験用）' })).toBeUndefined()
   await ui.unmount()
+
+  // /session-set のペインは、上にリストの表、下に矢印の図（私の指示「1枚のセッションタブにリストと通信 どちらも表示してほしい」）
+  const set = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...SET })
+  expect(await set.find({ type: 'Text', text: 'セッションリストの表（試験用）' })).toBeDefined()
+  const setSvgs = await set.findAll({ type: 'Svg' })
+  expect(setSvgs.length).toBe(1)
+  expect(String(setSvgs[0]?.props.source ?? '')).toContain('>監視係<')
+  // 表が上、図が下
+  const drawn = JSON.stringify(await set.drawn())
+  expect(drawn.indexOf('<svg')).toBeGreaterThan(0)
+  expect(drawn.indexOf('セッションリストの表（試験用）')).toBeLessThan(drawn.indexOf('<svg'))
+  await set.unmount()
+
+  // ターミナル（図を描けない）では、/session-set のペインはリストの表だけ
+  const term = await $.ui.mount({ plugin: 'session-comm', surface: 'terminal', ...SET })
+  expect(await term.find({ type: 'Text', text: 'セッションリストの表（試験用）' })).toBeDefined()
+  expect(await term.find({ type: 'Svg' })).toBeUndefined()
+  await term.unmount()
+
+  // /session-list のペインには、この mod は何も足さない（私の指示「セッションリストだけのコマンド」）
+  const list = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...LIST })
+  expect(await list.find({ type: 'Text', text: 'セッションリストの表（試験用）' })).toBeDefined()
+  expect(await list.find({ type: 'Svg' })).toBeUndefined()
+  await list.unmount()
+})
+
+test('/session-comm を開いていなくても、/session-set のペインが描かれている間は、図の材料を読み直す', async ($, on) => {
+  const clock = mock.clock(on, { now: NOW })
+  const world = stubWorld(on, ran(ATTENDANCE, 0))
+  on('ui.render', ($: any, e: any) => $.ui.resolve(e).Text({ children: 'セッションリストの表（試験用）' }))
+
+  await $.session.start(START)
+  await clock.advance(10_000)
+  expect(world.scripts.length).toBe(0)
+
+  // /session-set のペインは セッションリストMOD が開く。この mod は、描かれたときに読み直しを始める
+  const first = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...SET })
+  await first.unmount()
+  await clock.advance(2000)
+  expect(world.scripts.some(script => script.endsWith('在席表.py'))).toBe(true)
+  // この mod は /session-set のペインを自分では開かない
+  expect(world.opens).toBe(0)
+
+  const again = await $.ui.mount({ plugin: 'session-comm', surface: 'vscode', ...SET })
+  const source = String((await again.find({ type: 'Svg' }))?.props.source ?? '')
+  for (const name of ['セッションA', '監視係', 'セッションC']) expect(source).toContain('>' + name + '<')
+  await again.unmount()
 })
 
 test('Linux（ホームが / で始まる）では python3 で回し、python3 が無ければ python に切り替える', async ($, on) => {
@@ -605,7 +649,7 @@ test('Linux（ホームが / で始まる）では python3 で回し、python3 �
   mock.env(on, { HOME: '/home/test' })
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('session.id', () => ({ value: 'bbbb2222-bbbb' }))
-  on('command.register', () => ({ value: { command: 'sessions' } }))
+  on('command.register', () => ({ value: { command: 'session-comm' } }))
   on('ui.panes', () => ({ value: [] }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('process.run', ($, e) => {
@@ -622,14 +666,14 @@ test('Linux（ホームが / で始まる）では python3 で回し、python3 �
   on('fs.stat', ($, e) => ({ value: statOf(e.path) }))
 
   await $.session.start({ cwd: '/work/space', surface: null, isInteractive: true })
-  await $.command.run({ command: 'sessions', args: '' })
+  await $.command.run({ command: 'session-comm', args: '' })
   await clock.advance(2000)
 
   // 最初は python3 を試し、起動できないので python に切り替える。そのあとは python だけを使う
   expect(used[0]).toBe('python3')
   expect(used.filter(command => command === 'python3').length).toBe(1)
   expect(used).toContain('python')
-  const ui = await $.ui.mount({ plugin: 'session-list', surface: 'terminal', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'session-comm', surface: 'terminal', ...PANE })
   expect(await ui.find({ type: 'Text', text: /セッションA/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /起動できません/ })).toBeUndefined()
   await ui.unmount()
